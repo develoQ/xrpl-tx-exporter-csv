@@ -1,4 +1,4 @@
-const {app, fields} = require('./app')
+const { app, fields, getPriceData, string2hex } = require("./app");
 
 // Check if on the CLI
 if (process && typeof process.exit == 'function') {
@@ -24,5 +24,7 @@ if (process && typeof process.exit == 'function') {
 
 module.exports = {
   app,
-  fields
-}
+  fields,
+  getPriceData,
+  string2hex,
+};

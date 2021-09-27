@@ -8,15 +8,18 @@ Uses [xrplcluster.com](https://xrplcluster.com) full history nodes.
 
 ### Exported columns:
 
-- ledger (XRPL Ledger Index)
-- direction (sent, received, other (eg. async DEX trading result))
-- txtype (XRPL Transaction Type)
-- date
-- currency (XRP or ISSUER.CURRENCY)
-- amount (amount in XRP (not drops) or IOU)
-- is_fee
-- fee (fee in XRP, chraged to own account)
-- hash
+- timestamp
+- Action(BUY/SELL/PAY/MINING/SENDFEE/TIP/REDUCE/BONUS/LENDING/STAKING/CASH/BORROW/RETURN)
+- Source (XRP Ledger)
+- Base
+- DerivType()
+- DerivDetails
+- Volume
+- Price
+- Counter
+- Fee
+- FeeCcy
+- Comment (TransactionType, hash)
 
 # Run: commandline (to CSV)
 

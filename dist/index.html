@@ -186,9 +186,6 @@
           <div class="d-inline-block">
             <button @click="start" :disabled="account === ''" class="btn btn-primary btn-lg py-1 mt-2 d-block">Fetch transactions</button>
           </div>
-          <div class="ps-3 d-inline-block">
-            <input v-model="withTxDetails" type="checkbox" id="withTxDetails" /> <label for="withTxDetails"> With transaction details (like destination/source tag)</label>
-          </div>
         </div>
         <div v-if="started">
           <div class="row" justify="center">

@@ -69,14 +69,14 @@
             },
             dispFields: () => {
               return exportModule.fields.filter((f) => {
-               return f !== 'hash' && f !== 'currency' && f !=='transactionType' && f !=='use'
+               return f !== 'Hash' && f !== 'Currency' && f !=='TransactionType' && f !=='use'
               })
             }
           },
           methods: {
             exportCsv: function() {
               const csvHeader = [exportModule.fields.filter((f) => {
-                return !(f === 'hash' || f === 'currency' || f=== 'transactionType')
+                return !(f === 'Hash' || f === 'Currency' || f=== 'TransactionType')
               })]
               return exportToCsv(this.account + '.csv',
                 csvHeader.concat(this.transactions.filter((tx) => {
@@ -84,7 +84,10 @@
                 })
                 .map((tx)=> {
                   return csvHeader[0].map((field) => {
-                    return String(tx[field])
+                    if(field==='Base' || field ==='Counter')
+                      return String(tx[field]==='XRP' || tx[field]==='JPY' ? tx[field] : tx[field].split('.')[1])
+                    else
+                      return String(tx[field])
                 })
               })))
             },
@@ -100,23 +103,23 @@
                   befTx = vThis.transactions[vThis.transactions.length - 1]
                 }
 
-                if(befTx && befTx.transactionType == 'OfferCreate' && befTx.timestamp == tx.timestamp){
+                if(befTx && befTx.TransactionType == 'OfferCreate' && befTx.Timestamp == tx.Timestamp){
                   const fixed = befTx
-                  if(fixed.base == 'XRP' && parseFloat(fixed.volume) < 0){
+                  if(fixed.base == 'XRP' && parseFloat(fixed.Volume) < 0){
                     // buy issued token
-                    const xrpVol = fixed.volume * -1
-                    fixed.action = 'BUY'
-                    fixed.counter = 'XRP'
-                    fixed.base = tx.base
-                    fixed.volume = tx.volume
-                    fixed.price = tx.volume / xrpVol
-                  } else if(fixed.base == 'XRP' && parseFloat(fixed.volume) > 0){
+                    const xrpVol = fixed.Volume * -1
+                    fixed.Action = 'BUY'
+                    fixed.Counter = 'XRP'
+                    fixed.Base = tx.Base
+                    fixed.Volume = tx.Volume
+                    fixed.Price = tx.Volume / xrpVol
+                  } else if(fixed.Base == 'XRP' && parseFloat(fixed.Volume) > 0){
                     // sell issued token
-                    const xrpVol = fixed.volume
-                    fixed.action = 'SELL'
-                    fixed.counter = 'XRP'
-                    fixed.base = tx.base
-                    fixed.price = tx.volume / xrpVol
+                    const xrpVol = fixed.Volume
+                    fixed.Sction = 'SELL'
+                    fixed.Counter = 'XRP'
+                    fixed.Base = tx.Base
+                    fixed.Price = tx.Volume / xrpVol
                   }
                   vThis.transactions[vThis.transactions.length - 1] = fixed
                 }else{
@@ -146,19 +149,21 @@
                 
                 const response = await fetch(`https://data.ripple.com/v2/exchange_rates/${base}/${counter}?date=${timestamp}`)
                 const data = await response.json()
+                console.log(data)
                 return data.rate
               }
                 
               await vThis.transactions.forEach(async (tx, idx) => {
                 await exportModule.fields.forEach(async (field) => {
-                  if(field === 'price' && tx['transactionType'] !== 'OfferCreate' && tx.base !== 'XRP' && tx.counter === 'XRP'){
-                    const [counterparty, currency] = tx.base.split(".");
-                    const base = getCurrency(tx.base);
-                    const counter = getCurrency(tx.counter);
+                  if(field === 'Price' && tx['TransactionType'] !== 'OfferCreate' && tx.Base !== 'XRP' && tx.Counter === 'XRP'){
+                    const [counterparty, currency] = tx.Base.split(".");
+                    const base = getCurrency(tx.Base);
+                    const counter = getCurrency(tx.Counter);
+                    console.log(tx['ts'])
                     vThis.transactions.splice(idx, 1, 
                       {
                         ...vThis.transactions[idx],
-                        price: await fetchPrice(base,counter,tx['timestamp'])
+                        Price: await fetchPrice(base,counter,tx['ts'])
                       }
                     )
                   }
@@ -229,7 +234,7 @@
               <thead>
                 <tr>
                   <th v-for="field in fields">
-                    <small v-if="field !== 'transactionType'"><code>{{ field }}</code></small>
+                    <small v-if="field !== 'TransactionType'"><code>{{ field }}</code></small>
                   </th>
                 </tr>
               </thead>
@@ -239,8 +244,9 @@
                     <input type="checkbox" v-model="tx.use"/>
                   </td>
                   <td v-for="field in dispFields">
-                    <small v-if="field !== 'hash' && field !== 'currency' && field !=='transactionType' && field !=='use'">
-                      <code class="text-dark">{{ tx[field] }}</code>
+                    <small v-if="field !== 'Hash' && field !== 'Currency' && field !=='TransactionType' && field !=='use'">
+                      <code class="text-dark" v-if="field === 'Base' || field ==='Counter'">{{ tx[field]==='XRP' || tx[field]==='JPY' ? tx[field] : tx[field].split('.')[1] }}</code>
+                      <code class="text-dark" v-else>{{ tx[field] }}</code>
                     </small>
                   </td>
                 </tr>

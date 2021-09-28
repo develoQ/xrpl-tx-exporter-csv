@@ -12,7 +12,10 @@ const app = async (account, cb) => {
         let direction = 'other'
         if (tx?.Account === account) direction = 'sent'
         if (tx?.Destination === account) direction = 'received'  
-        const moment = (new Date((tx.date + 946684800) * 1000)).toISOString()
+        const moment = new Date((tx.date + 946684800) * 1000).toISOString();
+        const formattedMoment = formatDate(
+          new Date((tx.date + 946684800) * 1000)
+        );
         const balanceChanges = parseBalanceChanges(meta)
         if (Object.keys(balanceChanges).indexOf(account) > -1) {
           const mutations = balanceChanges[account]
@@ -70,20 +73,21 @@ const app = async (account, cb) => {
             // - Comment
 
             cb({
-              timestamp: moment,
-              action: action,
+              Timestamp: formattedMoment,
+              ts: moment,
+              Action: action,
               //"BUY/SELL/PAY/SENDFEE/TIP/REDUCE/BONUS/LENDING/STAKING",
-              source: "XRP Ledger",
-              base: currency,
-              derivType: "",
-              derivDetails: "",
-              volume: mutation.value,
-              price: "",
-              counter: currency === "XRP" ? "JPY" : "XRP",
-              fee: isFee === 1 ? fee : 0,
-              feeCcy: isFee === 1 ? "XRP" : "",
-              comment: tx.TransactionType + " / " + tx.hash,
-              transactionType: tx.TransactionType,
+              Source: "XRP Ledger",
+              Base: currency,
+              DerivType: "",
+              DerivDetails: "",
+              Volume: mutation.value,
+              Price: "",
+              Counter: currency === "XRP" ? "JPY" : "XRP",
+              Fee: isFee === 1 ? fee : 0,
+              FeeCcy: isFee === 1 ? "XRP" : "XRP",
+              Comment: tx.TransactionType + " / " + tx.hash,
+              TransactionType: tx.TransactionType,
             });
           })
         }
@@ -114,21 +118,26 @@ const app = async (account, cb) => {
   client.close()
 }
 
+const formatDate = (d) => {
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${d.getMinutes()}` //.padStart(2, "0")
+  .replace(/\n|\r/g, "");
+};
+
 
 const fields = [
-  "timestamp",
-  "action",
-  "source",
-  "base",
-  "derivType",
-  "derivDetails",
-  "volume",
-  "price",
-  "counter",
-  "fee",
-  "feeCcy",
-  "comment",
-  "transactionType",
+  "Timestamp",
+  "Action",
+  "Source",
+  "Base",
+  "DerivType",
+  "DerivDetails",
+  "Volume",
+  "Price",
+  "Counter",
+  "Fee",
+  "FeeCcy",
+  "Comment",
+  "TransactionType",
 ];
 
 
@@ -149,56 +158,8 @@ function convertCurrency(currency) {
   }
 }
 
-const RippleAPI = require("ripple-lib").RippleAPI;
-const api = new RippleAPI({
-  server: "wss://s1.ripple.com", // Public rippled server
-});
-
-const getPriceData = async (address, transactions) => {
-  await api.connect()
-  const result = await transactions.map(async (tx)=> {
-    return await Promise.all(fields.map((field) => {
-      if (field === 'price' && tx['transactionType'] !== 'OfferCreate' && tx.base !== 'XRP' && tx.counter === 'XRP') {
-        const [counterparty, currency] = tx.base.split(".");
-        const base = {
-          currency:
-            currency.length === 3
-              ? currency
-              : string2hex(currency).toUpperCase().padEnd(40, "0"),
-          counterparty: counterparty,
-        };
-        const counter = {
-          currency: tx.counter
-        };
-        const price = getPrice(address, base, counter);
-        return String(price)
-      }else{
-        return String(tx[field]);
-      }
-    }));
-  })
-  // await api.disconnect()
-  return result
-}
-
-async function getPrice(address, base, counter) {
-  const orderbook = {
-    base,
-    counter,
-  };
-  const options = {
-    ledgerVersion: undefined,
-     limit: 1,
-  }
-
-  const result = await api.getOrderbook(address, orderbook, options);
-
-  return result
-}
-
 module.exports = {
   app,
   fields,
-  getPriceData,
   string2hex,
 };
